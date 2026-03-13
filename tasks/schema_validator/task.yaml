@@ -1,0 +1,149 @@
+prompt: |
+  You are given a JSON file at /workdir/data/validation_request.json.
+
+  The file contains:
+  - a "schemas" array, where each entry defines a schema using a subset of JSON Schema Draft 4
+  - a "documents" array, where each document references a schema by "schema_id" and contains a "data" object to validate
+
+  Your task is to validate each document's "data" object against its referenced schema and write the results to:
+
+    /workdir/validation_results.json
+
+  Use only Python standard library modules.
+
+  Validation requirements:
+
+  1. Type validation
+     Support these schema types:
+     - string
+     - number
+     - integer
+     - boolean
+     - null
+     - array
+     - object
+
+  2. String constraints
+     Support:
+     - minLength
+     - maxLength
+     - pattern
+     - format
+
+     Supported format values:
+     - email
+     - date
+     - uuid
+     - uri
+
+  3. Number constraints
+     Support:
+     - minimum
+     - maximum
+     - exclusiveMinimum
+     - exclusiveMaximum
+     - multipleOf
+
+     Treat exclusiveMinimum and exclusiveMaximum using JSON Schema Draft 4 semantics:
+     - exclusiveMinimum is a boolean modifier for minimum
+     - exclusiveMaximum is a boolean modifier for maximum
+
+  4. Array constraints
+     Support:
+     - minItems
+     - maxItems
+     - uniqueItems
+     - items
+
+  5. Object constraints
+     Support:
+     - required
+     - properties
+     - additionalProperties
+
+  6. Enum constraint
+     Support:
+     - enum
+
+  Validation behavior:
+  - Validate every document independently
+  - Collect all validation errors for each document, not just the first one
+  - Preserve the original document order in the output
+  - Use JSON-style paths starting with "$"
+  - Use paths like:
+    - $
+    - $.email
+    - $.items[0]
+    - $.items[0].quantity
+
+  Output format:
+
+  Write a JSON object with this structure:
+
+  {
+    "validation_results": [
+      {
+        "document_id": "doc_001",
+        "schema_id": "schema_user",
+        "valid": true,
+        "errors": []
+      },
+      {
+        "document_id": "doc_002",
+        "schema_id": "schema_user",
+        "valid": false,
+        "errors": [
+          {
+            "path": "$.email",
+            "message": "Invalid email format",
+            "constraint": "format",
+            "expected": "valid email",
+            "actual": "invalid-email"
+          }
+        ]
+      }
+    ],
+    "summary": {
+      "total_documents": 10,
+      "valid_documents": 3,
+      "invalid_documents": 7,
+      "total_errors": 19,
+      "errors_by_constraint": {
+        "type": 5,
+        "required": 3,
+        "format": 4,
+        "minimum": 2,
+        "pattern": 2,
+        "enum": 1,
+        "uniqueItems": 1,
+        "additionalProperties": 1
+      }
+    }
+  }
+
+  Error object requirements:
+  - "path": JSON-style path to the invalid value
+  - "message": human-readable explanation
+  - "constraint": schema keyword that was violated
+  - "expected": expected condition or value
+  - "actual": actual value or observed condition
+
+  Summary requirements:
+  - total_documents: total number of input documents
+  - valid_documents: number of valid documents
+  - invalid_documents: number of invalid documents
+  - total_errors: total number of collected validation errors
+  - errors_by_constraint: count of errors grouped by constraint name
+
+  Important:
+  - Do not use third-party libraries
+  - Read input only from /workdir/data/validation_request.json
+  - Write output only to /workdir/validation_results.json
+  - Output must be valid JSON
+  - Every document in the input must appear exactly once in validation_results
+  - If a document references a schema_id that does not exist, treat it as a validation failure for that document and include an appropriate error
+
+metadata:
+  difficulty: medium
+  category: json-schema-validation
+  required_runtime: python3.11
